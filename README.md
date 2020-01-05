@@ -34,7 +34,7 @@
 
 ```php
 
-composer require larabook/gateway
+composer require acharsoft/gateway
 
 ```   
 
