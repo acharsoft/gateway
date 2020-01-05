@@ -1,6 +1,6 @@
 {
-  "name": "larabook/gateway",
-  "homepage": "https://github.com/larabook/gateway",
+  "name": "acharsoft/gateway",
+  "homepage": "https://github.com/acharsoft/gateway",
   "description": "A Laravel package for connecting to all Iraninan payment  gateways",
   "keywords": [
     "laravel",
@@ -32,6 +32,10 @@
   ],
   "license": "MIT",
   "authors": [
+    {
+      "name": "Mobin Poursalami",
+      "email": "mobinpou@gmail.com"
+    },
     {
       "name": "Hamed Pakdaman",
       "email": "pakdaman.it@gmail.com"
