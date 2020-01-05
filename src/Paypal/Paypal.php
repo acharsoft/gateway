@@ -19,6 +19,8 @@ use PayPal\Api\Transaction;
 use PayPal\Auth\OAuthTokenCredential;
 use PayPal\Exception\PayPalConnectionException;
 use PayPal\Rest\ApiContext;
+use Illuminate\Support\Facades\DB;
+
 
 class Paypal extends PortAbstract implements PortInterface
 {
@@ -36,6 +38,15 @@ class Paypal extends PortAbstract implements PortInterface
     {
         $this->amount = $amount;
 
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
         return $this;
     }
 
@@ -61,17 +72,29 @@ class Paypal extends PortAbstract implements PortInterface
      */
     function getCallback()
     {
+        $result = DB::select('select * from settings where id = ?', [DB::select('select * from paypals where user_id = ?', [$this->userid])[0]->settings]);
+        $arr = [];
+        foreach($result as $row)
+        {
+            $arr[] = (array) $row;
+        }
         if (!$this->callbackUrl)
-            $this->callbackUrl = $this->config->get('gateway.paypal.settings.call_back_url');
+            $this->callbackUrl = $arr[0]['call_back_url'];//$this->config->get('gateway.paypal.settings.call_back_url');
 
         return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
     }
 
     public function setApiContext()
     {
-        $paypal_conf = $this->config->get('gateway.paypal');
-        $this->_api_context = new ApiContext(new OAuthTokenCredential($paypal_conf['client_id'], $paypal_conf['secret']));
-        $this->_api_context->setConfig($paypal_conf['settings']);
+        $paypal_conf = DB::select('select * from paypals where user_id = ?', [$this->userid])[0];//$this->config->get('gateway.paypal');
+        $this->_api_context = new ApiContext(new OAuthTokenCredential($paypal_conf->client_id, $paypal_conf->secret));
+        $result = DB::select('select * from settings where id = ?', [$paypal_conf->settings]);
+        $arr = [];
+        foreach($result as $row)
+        {
+            $arr[] = (array) $row;
+        }
+        $this->_api_context->setConfig($arr[0]);
     }
 
     public function setShipmentPrice($shipmentPrice)
@@ -236,7 +259,7 @@ class Paypal extends PortAbstract implements PortInterface
 
     public function getProductName(){
         if(!$this->productName){
-            return $this->config->get('gateway.paypal.default_product_name');
+            return DB::select('select * from paypals where user_id = ?', [$this->userid])[0]->default_product_name;//$this->config->get('gateway.paypal.default_product_name');
         }
 
         return $this->productName;
@@ -244,7 +267,7 @@ class Paypal extends PortAbstract implements PortInterface
 
     public function getShipmentPrice(){
         if(!$this->shipmentPrice){
-            return $this->config->get('gateway.paypal.default_shipment_price');
+            return DB::select('select * from paypals where user_id = ?', [$this->userid])[0]->default_shipment_price;//$this->config->get('gateway.paypal.default_shipment_price');
         }
 
         return $this->shipmentPrice;

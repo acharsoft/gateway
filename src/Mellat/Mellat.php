@@ -8,6 +8,8 @@ use Larabookir\Gateway\Enum;
 use SoapClient;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Mellat extends PortAbstract implements PortInterface
 {
@@ -27,6 +29,15 @@ class Mellat extends PortAbstract implements PortInterface
 
 		return $this;
 	}
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
+        return $this;
+    }
 
 	/**
 	 * {@inheritdoc}
@@ -79,7 +90,7 @@ class Mellat extends PortAbstract implements PortInterface
 	function getCallback()
 	{
 		if (!$this->callbackUrl)
-			$this->callbackUrl = $this->config->get('gateway.mellat.callback-url');
+			$this->callbackUrl = DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.mellat.callback-url');
 
 		return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 	}
@@ -98,9 +109,9 @@ class Mellat extends PortAbstract implements PortInterface
 		$this->newTransaction();
 
 		$fields = array(
-			'terminalId' => $this->config->get('gateway.mellat.terminalId'),
-			'userName' => $this->config->get('gateway.mellat.username'),
-			'userPassword' => $this->config->get('gateway.mellat.password'),
+			'terminalId' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->terminalId,//$this->config->get('gateway.mellat.terminalId'),
+			'userName' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->username,//$this->config->get('gateway.mellat.username'),
+			'userPassword' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->password,//$this->config->get('gateway.mellat.password'),
 			'orderId' => $this->transactionId(),
 			'amount' => $this->amount,
 			'localDate' => $dateTime->format('Ymd'),
@@ -165,9 +176,9 @@ class Mellat extends PortAbstract implements PortInterface
 	protected function verifyPayment()
 	{
 		$fields = array(
-			'terminalId' => $this->config->get('gateway.mellat.terminalId'),
-			'userName' => $this->config->get('gateway.mellat.username'),
-			'userPassword' => $this->config->get('gateway.mellat.password'),
+			'terminalId' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->terminalId,//$this->config->get('gateway.mellat.terminalId'),
+			'userName' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->username,//$this->config->get('gateway.mellat.username'),
+			'userPassword' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->password,//$this->config->get('gateway.mellat.password'),
 			'orderId' => $this->transactionId(),
 			'saleOrderId' => $this->transactionId(),
 			'saleReferenceId' => $this->trackingCode()
@@ -203,9 +214,9 @@ class Mellat extends PortAbstract implements PortInterface
 	protected function settleRequest()
 	{
 		$fields = array(
-			'terminalId' => $this->config->get('gateway.mellat.terminalId'),
-			'userName' => $this->config->get('gateway.mellat.username'),
-			'userPassword' => $this->config->get('gateway.mellat.password'),
+			'terminalId' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->terminalId,//$this->config->get('gateway.mellat.terminalId'),
+			'userName' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->username,//$this->config->get('gateway.mellat.username'),
+			'userPassword' => DB::select('select * from mellats where user_id = ?', [$this->userid])[0]->password,//$this->config->get('gateway.mellat.password'),
 			'orderId' => $this->transactionId(),
 			'saleOrderId' => $this->transactionId(),
 			'saleReferenceId' => $this->trackingCode

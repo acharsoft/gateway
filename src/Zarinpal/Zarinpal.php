@@ -8,6 +8,8 @@ use Larabookir\Gateway\Enum;
 use SoapClient;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Zarinpal extends PortAbstract implements PortInterface
 {
@@ -96,6 +98,15 @@ class Zarinpal extends PortAbstract implements PortInterface
 		return $this;
 	}
 
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
+        return $this;
+    }
+
 	/**
 	 * {@inheritdoc}
 	 */
@@ -111,7 +122,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	 */
 	public function redirect()
 	{
-		switch ($this->config->get('gateway.zarinpal.type')) {
+		switch (DB::select('select * from zarinpals where user_id = ?', [$this->userid])[0]->type){//$this->config->get('gateway.zarinpal.type')) {
 			case 'zarin-gate':
 				return \Redirect::to(str_replace('$Authority', $this->refId, $this->zarinGateUrl));
 				break;
@@ -153,7 +164,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	function getCallback()
 	{
 		if (!$this->callbackUrl)
-			$this->callbackUrl = $this->config->get('gateway.zarinpal.callback-url');
+			$this->callbackUrl = DB::select('select * from zarinpals where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.zarinpal.callback-url');
 
 		return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 	}
@@ -170,12 +181,12 @@ class Zarinpal extends PortAbstract implements PortInterface
 		$this->newTransaction();
 
 		$fields = array(
-			'MerchantID' => $this->config->get('gateway.zarinpal.merchant-id'),
+			'MerchantID' => DB::select('select * from zarinpals where user_id = ?', [$this->userid])[0]->merchant_id,//$this->config->get('gateway.zarinpal.merchant-id'),
 			'Amount' => $this->amount,
 			'CallbackURL' => $this->getCallback(),
-			'Description' => $this->description ? $this->description : $this->config->get('gateway.zarinpal.description', ''),
-			'Email' => $this->email ? $this->email :$this->config->get('gateway.zarinpal.email', ''),
-			'Mobile' => $this->mobileNumber ? $this->mobileNumber : $this->config->get('gateway.zarinpal.mobile', ''),
+			'Description' => $this->description ? $this->description : (DB::select('select * from zarinpals where user_id = ?', [$this->userid])[0]->descriptin ?? ''),//$this->config->get('gateway.zarinpal.description', ''),
+			'Email' => $this->email ? $this->email :(DB::select('select * from zarinpals where user_id = ?', [$this->userid])[0]->email ?? ''),//$this->config->get('gateway.zarinpal.email', ''),
+			'Mobile' => $this->mobileNumber ? $this->mobileNumber : (DB::select('select * from zarinpals where user_id = ?', [$this->userid])[0]->mobile ?? ''),//$this->config->get('gateway.zarinpal.mobile', ''),
 		);
 
 		try {
@@ -230,7 +241,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	{
 
 		$fields = array(
-			'MerchantID' => $this->config->get('gateway.zarinpal.merchant-id'),
+			'MerchantID' => DB::select('select * from zarinpals where user_id = ?', [$this->userid])[0]->merchant_id,//$this->config->get('gateway.zarinpal.merchant-id'),
 			'Authority' => $this->refId,
 			'Amount' => $this->amount,
 		);
@@ -264,7 +275,7 @@ class Zarinpal extends PortAbstract implements PortInterface
 	 */
 	protected function setServer()
 	{
-		$server = $this->config->get('gateway.zarinpal.server', 'germany');
+		$server = DB::select('select * from zarinpals where user_id = ?', [$this->userid])[0]->server ?? 'germany';//$this->config->get('gateway.zarinpal.server', 'germany');
 		switch ($server) {
 			case 'iran':
 				$this->serverUrl = $this->iranServer;

@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Request;
 use Larabookir\Gateway\Enum;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Payline extends PortAbstract implements PortInterface
 {
@@ -39,6 +41,15 @@ class Payline extends PortAbstract implements PortInterface
 
 		return $this;
 	}
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
+        return $this;
+    }
 
 	/**
 	 * {@inheritdoc}

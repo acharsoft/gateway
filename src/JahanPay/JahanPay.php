@@ -7,6 +7,8 @@ use Larabookir\Gateway\Enum;
 use SoapClient;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class JahanPay extends PortAbstract implements PortInterface
 {
@@ -31,6 +33,15 @@ class JahanPay extends PortAbstract implements PortInterface
     {
         $this->amount = ($amount / 10);
 
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
         return $this;
     }
 

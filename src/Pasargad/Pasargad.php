@@ -7,6 +7,8 @@ use Larabookir\Gateway\Enum;
 use Larabookir\Gateway\Parsian\ParsianErrorException;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Pasargad extends PortAbstract implements PortInterface
 {
@@ -39,6 +41,15 @@ class Pasargad extends PortAbstract implements PortInterface
     /**
      * {@inheritdoc}
      */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
     public function ready($payment_id, $callback_url)
     {
         $this->sendPayRequest($payment_id, $callback_url);
@@ -52,14 +63,14 @@ class Pasargad extends PortAbstract implements PortInterface
     public function redirect()
     {
 
-        $processor = new RSAProcessor($this->config->get('gateway.pasargad.certificate-path'), RSAKeyType::XMLFile);
+        $processor = new RSAProcessor(DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->certificate_path, RSAKeyType::XMLFile);//$this->config->get('gateway.pasargad.certificate-path'), RSAKeyType::XMLFile);
 
         $url = $this->gateUrl;
         $redirectUrl = $this->getCallback();
         $invoiceNumber = $this->transactionId();
         $amount = $this->amount;
-        $terminalCode = $this->config->get('gateway.pasargad.terminalId');
-        $merchantCode = $this->config->get('gateway.pasargad.merchantId');
+        $terminalCode = DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->terminalId;//$this->config->get('gateway.pasargad.terminalId');
+        $merchantCode = DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->merchantId;//$this->config->get('gateway.pasargad.merchantId');
         $timeStamp = date("Y/m/d H:i:s");
         $invoiceDate = date("Y/m/d H:i:s");
         $action = 1003;
@@ -101,7 +112,7 @@ class Pasargad extends PortAbstract implements PortInterface
     function getCallback()
     {
         if (!$this->callbackUrl)
-            $this->callbackUrl = $this->config->get('gateway.pasargad.callback-url');
+            $this->callbackUrl = DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.pasargad.callback-url');
 
         return $this->callbackUrl;
     }
@@ -155,9 +166,9 @@ class Pasargad extends PortAbstract implements PortInterface
      */
     protected function callVerifyPayment($data)
     {
-        $processor = new RSAProcessor($this->config->get('gateway.pasargad.certificate-path'), RSAKeyType::XMLFile);
-        $merchantCode = $this->config->get('gateway.pasargad.merchantId');
-        $terminalCode = $this->config->get('gateway.pasargad.terminalId');
+        $processor = new RSAProcessor(DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->certificate_path, RSAKeyType::XMLFile);//$this->config->get('gateway.pasargad.certificate-path'), RSAKeyType::XMLFile);
+        $merchantCode = DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->merchantId;//$this->config->get('gateway.pasargad.merchantId');
+        $terminalCode = DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->terminalId;//$this->config->get('gateway.pasargad.terminalId');
         $invoiceNumber = $data['invoiceNumber'];
         $invoiceDate = $data['invoiceDate'];
         $timeStamp = date("Y/m/d H:i:s");

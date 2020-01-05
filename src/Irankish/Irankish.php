@@ -8,6 +8,8 @@ use Larabookir\Gateway\Enum;
 use SoapClient;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Irankish extends PortAbstract implements PortInterface
 {
@@ -30,7 +32,15 @@ class Irankish extends PortAbstract implements PortInterface
     public function set($amount)
     {
         $this->amount = $amount;
+        return $this;
+    }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
         return $this;
     }
 
@@ -51,7 +61,7 @@ class Irankish extends PortAbstract implements PortInterface
     {
         $gateUrl     = $this->gateUrl;
         $token      = $this->refId;
-        $merchantId = $this->config->get('gateway.irankish.merchantId');
+        $merchantId = DB::select('select * from irankishes where user_id = ?', [$this->userid])[0]->merchantId;//$this->config->get('gateway.irankish.merchantId');
 
         return view('gateway::irankish-redirector')->with(compact('token', 'merchantId','gateUrl'));
     }
@@ -87,7 +97,7 @@ class Irankish extends PortAbstract implements PortInterface
     function getCallback()
     {
         if (!$this->callbackUrl) {
-            $this->callbackUrl = $this->config->get('gateway.irankish.callback-url');
+            $this->callbackUrl = DB::select('select * from irankishes where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.irankish.callback-url');
         }
 
         return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
@@ -108,7 +118,7 @@ class Irankish extends PortAbstract implements PortInterface
 
         $fields = [
             'amount'           => $this->amount,
-            'merchantId'       => $this->config->get('gateway.irankish.merchantId'),
+            'merchantId'       => DB::select('select * from irankishes where user_id = ?', [$this->userid])[0]->merchantId,//$this->config->get('gateway.irankish.merchantId'),
             'invoiceNo'        => $this->transactionId(),
             'paymentId'        => $this->getCustomInvoiceNo(),
             'revertURL'        => $this->getCallback(),
@@ -171,9 +181,9 @@ class Irankish extends PortAbstract implements PortInterface
     {
         $fields = [
             'token'       => $this->refId(),
-            'merchantId'  => $this->config->get('gateway.irankish.merchantId'),
+            'merchantId'  => DB::select('select * from irankishes where user_id = ?', [$this->userid])[0]->merchantId,//$this->config->get('gateway.irankish.merchantId'),
             'referenceNumber' => $this->trackingCode(),
-            'sha1key'         => $this->config->get('gateway.irankish.sha1key')
+            'sha1key'         => DB::select('select * from irankishes where user_id = ?', [$this->userid])[0]->sha1key,//$this->config->get('gateway.irankish.sha1key')
         ];
 
         try {

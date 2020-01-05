@@ -2,6 +2,7 @@
 
 namespace Larabookir\Gateway\Asanpardakht;
 
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Request;
 use SoapClient;
 use Larabookir\Gateway\PortAbstract;
@@ -22,7 +23,15 @@ class Asanpardakht extends PortAbstract implements PortInterface
     public function set($amount)
     {
         $this->amount = $amount;
+        return $this;
+    }
 
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
         return $this;
     }
 
@@ -76,7 +85,7 @@ class Asanpardakht extends PortAbstract implements PortInterface
     function getCallback()
     {
         if (!$this->callbackUrl)
-            $this->callbackUrl = $this->config->get('gateway.asanpardakht.callback-url');
+            $this->callbackUrl =DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.asanpardakht.callback-url');
 
         $url = $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 
@@ -94,8 +103,8 @@ class Asanpardakht extends PortAbstract implements PortInterface
     {
         $this->newTransaction();
 
-        $username = $this->config->get('gateway.asanpardakht.username');
-        $password = $this->config->get('gateway.asanpardakht.password');
+        $username =DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->username;// $this->config->get('gateway.asanpardakht.username');
+        $password = DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->password;//$this->config->get('gateway.asanpardakht.password');
         $orderId = $this->transactionId();
         $price = $this->amount;
         $localDate = date("Ymd His");
@@ -105,7 +114,7 @@ class Asanpardakht extends PortAbstract implements PortInterface
 
         $encryptedRequest = $this->encrypt($req);
         $params = array(
-            'merchantConfigurationID' => $this->config->get('gateway.asanpardakht.merchantConfigId'),
+            'merchantConfigurationID' => DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->merchantConfigId,//$this->config->get('gateway.asanpardakht.merchantConfigId'),
             'encryptedRequest' => $encryptedRequest
         );
 
@@ -146,7 +155,7 @@ class Asanpardakht extends PortAbstract implements PortInterface
 
         $paramsArray = explode(",", $ReturningParams);
         $Amount = $paramsArray[0];
-        $SaleOrderId = $paramsArray[1];
+        $SaleOrderId = $paramsArray[$this->userid];
         $RefId = $paramsArray[2];
         $ResCode = $paramsArray[3];
         $ResMessage = $paramsArray[4];
@@ -181,12 +190,12 @@ class Asanpardakht extends PortAbstract implements PortInterface
     protected function verifyAndSettlePayment()
     {
 
-        $username = $this->config->get('gateway.asanpardakht.username');
-        $password = $this->config->get('gateway.asanpardakht.password');
+        $username = DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->username;//$this->config->get('gateway.asanpardakht.username');
+        $password = DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->password;//$this->config->get('gateway.asanpardakht.password');
 
         $encryptedCredintials = $this->encrypt("{$username},{$password}");
         $params = array(
-            'merchantConfigurationID' => $this->config->get('gateway.asanpardakht.merchantConfigId'),
+            'merchantConfigurationID' => DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->merchantConfigId,//$this->config->get('gateway.asanpardakht.merchantConfigId'),
             'encryptedCredentials' => $encryptedCredintials,
             'payGateTranID' => $this->trackingCode
         );
@@ -239,8 +248,8 @@ class Asanpardakht extends PortAbstract implements PortInterface
     private function encrypt($string = "")
     {
 
-        $key = $this->config->get('gateway.asanpardakht.key');
-        $iv = $this->config->get('gateway.asanpardakht.iv');
+        $key = DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->key;//$this->config->get('gateway.asanpardakht.key');
+        $iv = DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->iv;//$this->config->get('gateway.asanpardakht.iv');
 
         try {
 
@@ -268,8 +277,8 @@ class Asanpardakht extends PortAbstract implements PortInterface
      */
     private function decrypt($string = "")
     {
-        $key = $this->config->get('gateway.asanpardakht.key');
-        $iv = $this->config->get('gateway.asanpardakht.iv');
+        $key = DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->key;//$this->config->get('gateway.asanpardakht.key');
+        $iv = DB::select('select * from asanpardakhts where user_id = ?', [$this->userid])[0]->iv;//$this->config->get('gateway.asanpardakht.iv');
 
         try {
 

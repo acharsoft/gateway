@@ -15,6 +15,15 @@ interface PortInterface
     public function set($amount);
 
     /**
+     * This method use for set user id.
+     *
+     * @param int $userId
+     *
+     * @return $this
+     */
+    public function setUserId($userId);
+
+    /**
      * This method use for done everything that necessary before redirect to port.
      *
      * @return $this

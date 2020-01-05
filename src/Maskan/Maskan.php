@@ -6,6 +6,8 @@ use Illuminate\Support\Facades\Input;
 use Larabookir\Gateway\Enum;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Maskan extends PortAbstract implements PortInterface
 {
@@ -32,6 +34,15 @@ class Maskan extends PortAbstract implements PortInterface
     public function set($amount)
     {
         $this->amount = $amount  ;
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
         return $this;
     }
 

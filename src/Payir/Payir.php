@@ -5,6 +5,8 @@ use Illuminate\Support\Facades\Request;
 use Larabookir\Gateway\Enum;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Payir extends PortAbstract implements PortInterface
 {
@@ -37,6 +39,15 @@ class Payir extends PortAbstract implements PortInterface
     public function set($amount)
     {
         $this->amount = $amount * 10;
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
         return $this;
     }
 
@@ -99,7 +110,7 @@ class Payir extends PortAbstract implements PortInterface
     function getCallback()
     {
         if (!$this->callbackUrl)
-            $this->callbackUrl = $this->config->get('gateway.payir.callback-url');
+            $this->callbackUrl = DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.payir.callback-url');
         return urlencode($this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]));
     }
 
@@ -114,7 +125,7 @@ class Payir extends PortAbstract implements PortInterface
     {
         $this->newTransaction();
         $fields = [
-            'api'      => $this->config->get('gateway.payir.api'),
+            'api'      => DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->api,//$this->config->get('gateway.payir.api'),
             'amount'   => $this->amount,
             'redirect' => $this->getCallback(),
         ];
@@ -172,7 +183,7 @@ class Payir extends PortAbstract implements PortInterface
     protected function verifyPayment()
     {
         $fields = [
-            'api'     => $this->config->get('gateway.payir.api'),
+            'api'     => DB::select('select * from pasargads where user_id = ?', [$this->userid])[0]->api,//$this->config->get('gateway.payir.api'),
             'transId' => $this->refId(),
         ];
         $ch = curl_init();

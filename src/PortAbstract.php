@@ -52,6 +52,13 @@ abstract class PortAbstract
 	 */
 	protected $amount;
 
+    /**
+     * User id
+     *
+     * @var int
+     */
+    protected $userid;
+
 	/**
 	 * Description of transaction
 	 *

@@ -7,6 +7,8 @@ use Illuminate\Validation\Rules\In;
 use SoapClient;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Parsian extends PortAbstract implements PortInterface
 {
@@ -34,6 +36,15 @@ class Parsian extends PortAbstract implements PortInterface
 		$this->amount = intval($amount);
 		return $this;
 	}
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
+        return $this;
+    }
 
 	/**
 	 * {@inheritdoc}
@@ -84,7 +95,7 @@ class Parsian extends PortAbstract implements PortInterface
 	function getCallback()
 	{
 		if (!$this->callbackUrl)
-			$this->callbackUrl = $this->config->get('gateway.parsian.callback-url');
+			$this->callbackUrl = DB::select('select * from parsians where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.parsian.callback-url');
 
 		return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 	}
@@ -102,7 +113,7 @@ class Parsian extends PortAbstract implements PortInterface
 		$this->newTransaction();
 
 		$params = array(
-            'LoginAccount'   => $this->config->get('gateway.parsian.pin'),
+            'LoginAccount'   => DB::select('select * from parsians where user_id = ?', [$this->userid])[0]->pin,//$this->config->get('gateway.parsian.pin'),
             'Amount'         => $this->amount . "",
             'OrderId'        => $this->transactionId(),
             'CallBackUrl'    => $this->getCallback(),
@@ -172,7 +183,7 @@ class Parsian extends PortAbstract implements PortInterface
 			throw new ParsianErrorException('تراکنشی یافت نشد', -1);
 
 		$params = array(
-            'LoginAccount' => $this->config->get('gateway.parsian.pin'),
+            'LoginAccount' => DB::select('select * from parsians where user_id = ?', [$this->userid])[0]->pin,//$this->config->get('gateway.parsian.pin'),
             'Token'        => $authority,
 		);
 

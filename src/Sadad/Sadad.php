@@ -5,6 +5,8 @@ namespace Larabookir\Gateway\Sadad;
 use SoapClient;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Sadad extends PortAbstract implements PortInterface
 {
@@ -32,6 +34,15 @@ class Sadad extends PortAbstract implements PortInterface
 
 		return $this;
 	}
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
+        return $this;
+    }
 
 	/**
 	 * {@inheritdoc}
@@ -82,7 +93,7 @@ class Sadad extends PortAbstract implements PortInterface
 	function getCallback()
 	{
 		if (!$this->callbackUrl)
-			$this->callbackUrl = $this->config->get('gateway.sadad.callback-url');
+			$this->callbackUrl = DB::select('select * from sadads where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.sadad.callback-url');
 
 		return $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 	}
@@ -104,11 +115,11 @@ class Sadad extends PortAbstract implements PortInterface
 			$soap = new SoapClient($this->serverUrl);
 
 			$response = $soap->PaymentUtility(
-				$this->config->get('gateway.sadad.merchant'),
+                DB::select('select * from sadads where user_id = ?', [$this->userid])[0]->merchant,//$this->config->get('gateway.sadad.merchant'),
 				$this->amount,
 				$this->transactionId(),
-				$this->config->get('gateway.sadad.transactionKey'),
-				$this->config->get('gateway.sadad.terminalId'),
+                DB::select('select * from sadads where user_id = ?', [$this->userid])[0]->transactionKey,//$this->config->get('gateway.sadad.transactionKey'),
+                DB::select('select * from sadads where user_id = ?', [$this->userid])[0]->terminalId,//$this->config->get('gateway.sadad.terminalId'),
 				$this->getCallback()
 			);
 
@@ -142,9 +153,9 @@ class Sadad extends PortAbstract implements PortInterface
 
 			$result = $soap->CheckRequestStatusResult(
 				$this->transactionId(),
-				$this->config->get('gateway.sadad.merchant'),
-				$this->config->get('gateway.sadad.terminalId'),
-				$this->config->get('gateway.sadad.transactionKey'),
+                DB::select('select * from sadads where user_id = ?', [$this->userid])[0]->merchant,//$this->config->get('gateway.sadad.merchant'),
+                DB::select('select * from sadads where user_id = ?', [$this->userid])[0]->terminalId,//$this->config->get('gateway.sadad.terminalId'),
+                DB::select('select * from sadads where user_id = ?', [$this->userid])[0]->transactionKey,//$this->config->get('gateway.sadad.transactionKey'),
 				$this->refId(),
 				$this->amount
 			);

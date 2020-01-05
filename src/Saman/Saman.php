@@ -7,6 +7,8 @@ use Illuminate\Support\Facades\Request;
 use SoapClient;
 use Larabookir\Gateway\PortAbstract;
 use Larabookir\Gateway\PortInterface;
+use Illuminate\Support\Facades\DB;
+
 
 class Saman extends PortAbstract implements PortInterface
 {
@@ -24,9 +26,11 @@ class Saman extends PortAbstract implements PortInterface
      * @var string
      */
 
-    protected $serverVerifyUrl = "https://sep.shaparak.ir/payments/referencepayment.asmx?WSDL";
+//    protected $serverVerifyUrl = "https://sep.shaparak.ir/payments/referencepayment.asmx?WSDL";
+    protected $serverVerifyUrl = "http://banktest.ir/gateway/saman/payments/referencepayment?wsdl";
 
-    protected $gateUrl = "https://sep.shaparak.ir/Payment.aspx";
+//    protected $gateUrl = "https://sep.shaparak.ir/Payment.aspx";
+    protected $gateUrl = "http://banktest.ir/gateway/saman/gate";
 
     /**
      * {@inheritdoc}
@@ -35,6 +39,15 @@ class Saman extends PortAbstract implements PortInterface
     {
         $this->amount = $amount;
 
+        return $this;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function setUserId($userid)
+    {
+        $this->userid= $userid;
         return $this;
     }
 
@@ -68,7 +81,7 @@ class Saman extends PortAbstract implements PortInterface
     {
         $main_data = [
             'amount'        => $this->amount,
-            'merchant'      => $this->config->get('gateway.saman.merchant'),
+            'merchant'      => DB::select('select * from samen where user_id = ?', [$this->userid])[0]->merchant,//$this->config->get('gateway.saman.merchant'),
             'resNum'        => $this->transactionId(),
             'callBackUrl'   => $this->getCallback()
         ];
@@ -108,7 +121,7 @@ class Saman extends PortAbstract implements PortInterface
     function getCallback()
     {
         if (!$this->callbackUrl)
-            $this->callbackUrl = $this->config->get('gateway.saman.callback-url');
+            $this->callbackUrl = DB::select('select * from samen where user_id = ?', [$this->userid])[0]->callback_url;//$this->config->get('gateway.saman.callback-url');
 
         $url = $this->makeCallback($this->callbackUrl, ['transaction_id' => $this->transactionId()]);
 
@@ -159,9 +172,9 @@ class Saman extends PortAbstract implements PortInterface
     protected function verifyPayment()
     {
         $fields = array(
-            "merchantID" => $this->config->get('gateway.saman.merchant'),
+            "merchantID" => DB::select('select * from samen where user_id = ?', [$this->userid])[0]->merchant,//$this->config->get('gateway.saman.merchant'),
             "RefNum" => $this->refId,
-            "password" => $this->config->get('gateway.saman.password'),
+            "password" => DB::select('select * from samen where user_id = ?', [$this->userid])[0]->password,//$this->config->get('gateway.saman.password'),
         );
 
         try {
