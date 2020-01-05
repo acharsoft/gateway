@@ -133,7 +133,7 @@ php artisan migrate
 try {
 
    $gateway = \Gateway::make('mellat');
-
+   $gateway->setUserId(1); // برای ست کردن یوزر 
    $gateway->setCallback(url('/bank/response')); // You can also change the callback
    $gateway->price(1000)
            // setShipmentPrice(10) // optional - just for paypal
